@@ -1,0 +1,51 @@
+FROM xiez/seafile-dev-deps
+
+ENV PYTHONUNBUFFERED 1
+
+# Set env variables used in this Dockerfile (add a unique prefix, such as DOCKYARD)
+# parent path of projects source code
+ENV DOCKYARD_SRC=.
+
+# Directory in container for all project files
+ENV DOCKYARD_SRVHOME=/code
+
+WORKDIR /code
+
+# libsearpc
+ADD $DOCKYARD_SRC/libsearpc /code/libsearpc
+RUN cd libsearpc && echo `pwd` >> ../build.info && git branch >> ../build.info && git log -1 >> ../build.info; \
+    ./autogen.sh && ./configure && make && make install && ldconfig; \
+    rm -rf ./*
+
+# ccnet
+ADD $DOCKYARD_SRC/pro/ccnet-pro-server /code/ccnet-pro-server
+RUN cd ccnet-pro-server/ && echo `pwd` >> ../build.info && git branch >> ../build.info && git log -1 >> ../build.info; \ 
+    ./autogen.sh && ./configure --enable-ldap && make && make install && ldconfig; \
+    rm -rf ./*
+
+# seafile pro
+RUN apt-get update && apt-get install -y libmemcached-dev; \
+    apt-get autoremove -y; apt-get clean; rm /var/lib/apt/lists/* -r; rm -rf /usr/share/man/*
+
+# seafile
+ADD $DOCKYARD_SRC/pro/seafile-pro-server /code/seafile-pro-server
+RUN cd seafile-pro-server/ && mkdir -p tests/conf/seafile-data && touch tests/conf/seafile-data/seafile.conf
+RUN cd seafile-pro-server/ && echo `pwd` >> ../build.info && git branch >> ../build.info && git log -1 >> ../build.info; \
+    ./autogen.sh && ./configure && make && make install && ldconfig; \
+    mv tests .. && rm -rf ./* && mv ../tests .
+
+# seahub
+ADD $DOCKYARD_SRC/seahub/requirements.txt $DOCKYARD_SRC/seahub/test-requirements.txt /code/
+RUN pip install -r /code/test-requirements.txt && rm -rf *requirements.txt
+ADD $DOCKYARD_SRC/seafile-docker/dev/setenv.sh /code/
+
+# seafevents
+ADD $DOCKYARD_SRC/pro/seafevents/requirements.txt /code/events_requirements.txt
+RUN pip install -r /code/events_requirements.txt && rm -rf *requirements.txt
+
+# seafobj
+ADD $DOCKYARD_SRC/pro/seafobj/seafobj /code/seafobj
+
+# run service when container start
+ADD $DOCKYARD_SRC/seafile-docker/dev/start-services-pro.sh /code
+CMD ["./start-services-pro.sh"]
