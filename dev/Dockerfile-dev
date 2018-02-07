@@ -34,9 +34,6 @@ RUN cd seafile-server/ && echo `pwd` >> ../build.info && git branch >> ../build.
     ./autogen.sh && ./configure && make && make install && ldconfig; \
     mv tests .. && rm -rf ./* && mv ../tests .
 
-# seahub env
-ADD $DOCKYARD_SRC/seafile-docker/dev/setenv.sh /code/
-
 # run service when container start
 ADD $DOCKYARD_SRC/seafile-docker/dev/start-services.sh /code
 CMD ["./start-services.sh"]

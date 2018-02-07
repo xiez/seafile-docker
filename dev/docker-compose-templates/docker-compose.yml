@@ -1,0 +1,19 @@
+version: '3'
+services:
+  dev:
+    image: xiez/seafile-dev:6.2
+    environment:
+      - LOCAL_USER_ID=1000
+      - CCNET_CONF_DIR=/code/seafile-server/tests/conf
+      - SEAFILE_CONF_DIR=/code/seafile-server/tests/conf/seafile-data
+      - PYTHONPATH=/code:/usr/local/lib/python2.7/dist-packages:/code/seahub/thirdpart
+    container_name: seafile-dev
+    build: 
+      context: .
+      dockerfile: seafile-docker/dev/Dockerfile-dev
+    volumes:
+      - /Users/xiez/dev/seafile-conf:/code/seafile-server/tests/conf
+      - /Users/xiez/dev/seahub:/code/seahub
+    ports:
+     - "8000:8000"
+     - "8082:8082"

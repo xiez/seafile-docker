@@ -1,0 +1,21 @@
+version: '3'
+services:
+  deps:
+    image: xiez/seafile-dev-deps
+    build: 
+      context: .
+      dockerfile: seafile-docker/dev/Dockerfile-dev-deps
+  dev:
+    image: xiez/seafile-dev:6.2
+    environment:
+      - LOCAL_USER_ID=1000
+    container_name: seafile-dev2
+    build: 
+      context: .
+      dockerfile: seafile-docker/dev/Dockerfile-dev
+    volumes:
+      - /Users/xiez/dev/seafile-conf:/code/seafile-server/tests/conf
+      - /Users/xiez/dev/seahub:/code/seahub
+    ports:
+     - "8000:8000"
+     - "8082:8082"
