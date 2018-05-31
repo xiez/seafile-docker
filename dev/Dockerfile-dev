@@ -1,0 +1,39 @@
+FROM xiez/seafile-dev-deps
+
+ENV PYTHONUNBUFFERED 1
+
+# Set env variables used in this Dockerfile (add a unique prefix, such as DOCKYARD)
+# parent path of projects source code
+ENV DOCKYARD_SRC=.
+
+# Directory in container for all project files
+ENV DOCKYARD_SRVHOME=/code
+
+WORKDIR /code
+
+# seahub depts
+ADD $DOCKYARD_SRC/seahub/requirements.txt $DOCKYARD_SRC/seahub/test-requirements.txt /code/
+RUN pip install -r /code/test-requirements.txt && rm -rf *requirements.txt
+
+# libsearpc
+ADD $DOCKYARD_SRC/libsearpc /code/libsearpc
+RUN cd libsearpc && echo `pwd` >> ../build.info && git branch >> ../build.info && git log -1 >> ../build.info; \
+    ./autogen.sh && ./configure && make && make install && ldconfig; \
+    rm -rf ./*
+
+# ccnet
+ADD $DOCKYARD_SRC/ce/ccnet-server /code/ccnet-server
+RUN cd ccnet-server/ && echo `pwd` >> ../build.info && git branch >> ../build.info && git log -1 >> ../build.info; \ 
+    ./autogen.sh && ./configure --enable-ldap && make && make install && ldconfig; \
+    rm -rf ./*
+
+# seafile
+ADD $DOCKYARD_SRC/ce/seafile-server /code/seafile-server
+RUN cd seafile-server/ && mkdir -p tests/conf/seafile-data && touch tests/conf/seafile-data/seafile.conf
+RUN cd seafile-server/ && echo `pwd` >> ../build.info && git branch >> ../build.info && git log -1 >> ../build.info; \
+    ./autogen.sh && ./configure && make && make install && ldconfig; \
+    mv tests .. && rm -rf ./* && mv ../tests .
+
+# run service when container start
+ADD $DOCKYARD_SRC/seafile-docker/dev/start-services.sh /code
+CMD ["./start-services.sh"]

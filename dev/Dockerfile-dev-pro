@@ -1,0 +1,63 @@
+FROM xiez/seafile-dev-deps
+
+ENV PYTHONUNBUFFERED 1
+
+# Set env variables used in this Dockerfile (add a unique prefix, such as DOCKYARD)
+# parent path of projects source code
+ENV DOCKYARD_SRC=.
+
+# Directory in container for all project files
+ENV DOCKYARD_SRVHOME=/code
+
+WORKDIR /code
+
+# libsearpc
+ADD $DOCKYARD_SRC/libsearpc /code/libsearpc
+RUN cd libsearpc && echo `pwd` >> ../build.info && git branch >> ../build.info && git log -1 >> ../build.info; \
+    ./autogen.sh && ./configure && make && make install && ldconfig; \
+    rm -rf ./*
+
+# libevent & python-libevent
+RUN git clone --depth=1 https://github.com/libevent/libevent.git && cd libevent && ./autogen.sh && ./configure --with-pic && make
+RUN git clone --depth=1 https://github.com/fancycode/python-libevent.git && cd python-libevent && export LIBEVENT_ROOT=/code/libevent/ && python setup.py install
+
+# PIL deps & seafile pro depts
+RUN apt-get update && apt-get install -y libjpeg-dev libmemcached-dev; \
+    apt-get autoremove -y; apt-get clean; rm /var/lib/apt/lists/* -r; rm -rf /usr/share/man/*
+
+# seahub depts
+ADD $DOCKYARD_SRC/seahub/requirements.txt $DOCKYARD_SRC/seahub/test-requirements.txt /code/
+RUN pip install -r /code/test-requirements.txt && rm -rf *requirements.txt
+
+# seafevents depts
+ADD $DOCKYARD_SRC/pro/seafevents/requirements.txt /code/events_requirements.txt
+RUN pip install -r /code/events_requirements.txt && rm -rf *requirements.txt
+
+# ccnet pro
+ADD $DOCKYARD_SRC/pro/ccnet-pro-server /code/ccnet-pro-server
+RUN cd ccnet-pro-server/ && echo `pwd` >> ../build.info && git branch >> ../build.info && git log -1 >> ../build.info; \ 
+    ./autogen.sh && ./configure --enable-ldap && make && make install && ldconfig; \
+    rm -rf ./*
+
+# seafile pro
+ADD $DOCKYARD_SRC/pro/seafile-pro-server /code/seafile-pro-server
+RUN cd seafile-pro-server/ && mkdir -p tests/conf/seafile-data && touch tests/conf/seafile-data/seafile.conf
+RUN cd seafile-pro-server/ && echo `pwd` >> ../build.info && git branch >> ../build.info && git log -1 >> ../build.info; \
+    ./autogen.sh && ./configure && make && make install && ldconfig; \
+    mv tests .. && rm -rf ./* && mv ../tests .
+
+# seahub & seahub-extra & seafevents & seafes & seafobj source code
+ADD $DOCKYARD_SRC/seahub /code/seahub
+ADD $DOCKYARD_SRC/pro/seahub-extra /code/seahub-extra
+ADD $DOCKYARD_SRC/pro/seafevents /code/seafevents
+ADD $DOCKYARD_SRC/pro/seafes /code/seafes
+ADD $DOCKYARD_SRC/pro/seafobj/seafobj /code/seafobj
+
+# seafile-conf & seafevents conf & seahub local_settings
+ADD $DOCKYARD_SRC/dev-conf/seafile /code/seafile-pro-server/tests/conf
+ADD $DOCKYARD_SRC/dev-conf/events.conf /code/seafevents/events.conf
+ADD $DOCKYARD_SRC/dev-conf/local_settings.py /code/seahub/seahub/local_settings.py
+
+# run service when container start
+ADD $DOCKYARD_SRC/seafile-docker/dev/start-services.sh /code
+CMD ["./start-services.sh"]

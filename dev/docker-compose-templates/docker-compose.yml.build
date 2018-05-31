@@ -1,0 +1,13 @@
+version: '3'
+services:
+  deps:
+    image: xiez/seafile-dev-deps
+    build: 
+      context: .
+      dockerfile: seafile-docker/dev/Dockerfile-dev-deps
+
+  pro:
+    image: xiez/seafile-dev-pro:6.2.13-pro
+    build:
+      context: .
+      dockerfile: seafile-docker/dev/Dockerfile-dev-pro
