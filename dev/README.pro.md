@@ -51,6 +51,7 @@ services:
       - SEAFILE_CONF_DIR=/code/seafile-pro-server/tests/conf/seafile-data
       - PYTHONPATH=/code:/code/seafevents:/usr/local/lib/python2.7/dist-packages:/code/seahub/thirdpart
       - MIGRATE_SEAHUB_DB=1
+      - PYTHON_EGG_CACHE=/tmp
 
     container_name: seafile-dev-pro
 

@@ -41,7 +41,6 @@ RUN cd ccnet-pro-server/ && echo `pwd` >> ../build.info && git branch >> ../buil
 
 # seafile pro
 ADD $DOCKYARD_SRC/pro/seafile-pro-server /code/seafile-pro-server
-RUN cd seafile-pro-server/ && mkdir -p tests/conf/seafile-data && touch tests/conf/seafile-data/seafile.conf
 RUN cd seafile-pro-server/ && echo `pwd` >> ../build.info && git branch >> ../build.info && git log -1 >> ../build.info; \
     ./autogen.sh && ./configure && make && make install && ldconfig; \
     mv tests .. && rm -rf ./* && mv ../tests .
@@ -52,6 +51,9 @@ ADD $DOCKYARD_SRC/pro/seahub-extra /code/seahub-extra
 ADD $DOCKYARD_SRC/pro/seafevents /code/seafevents
 ADD $DOCKYARD_SRC/pro/seafes /code/seafes
 ADD $DOCKYARD_SRC/pro/seafobj/seafobj /code/seafobj
+
+# Remove .git folder to reduce image size
+RUN find /code -name .git -type d -prune -exec rm -rf {} +
 
 # seafile-conf & seafevents conf & seahub local_settings
 ADD $DOCKYARD_SRC/dev-conf/seafile /code/seafile-pro-server/tests/conf
