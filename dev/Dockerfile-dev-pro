@@ -21,8 +21,9 @@ RUN cd libsearpc && echo `pwd` >> ../build.info && git branch >> ../build.info &
 RUN git clone --depth=1 https://github.com/libevent/libevent.git && cd libevent && ./autogen.sh && ./configure --with-pic && make
 RUN git clone --depth=1 https://github.com/fancycode/python-libevent.git && cd python-libevent && export LIBEVENT_ROOT=/code/libevent/ && python setup.py install
 
-# PIL deps & seafile pro depts
-RUN apt-get update && apt-get install -y libjpeg-dev libmemcached-dev; \
+# Nodejs & seafile pro depts
+RUN curl -sL https://deb.nodesource.com/setup_8.x | bash -
+RUN apt-get update && apt-get install -y libjpeg-dev libmemcached-dev nodejs; \
     apt-get autoremove -y; apt-get clean; rm /var/lib/apt/lists/* -r; rm -rf /usr/share/man/*
 
 # seahub depts

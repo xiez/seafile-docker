@@ -12,7 +12,10 @@ useradd --shell /bin/bash -u $USER_ID -o -c "" -m user
 export HOME=/home/user
 
 echo "Change ownership of /code to user"
-chown -R user:user /code
+chown -R user:user /code/ccnet-pro-server
+chown -R user:user /code/seafile-pro-server
+chown -R user:user /code/seafevents
+chown -R user:user /code/seahub/seahub
 
 if [ "$IS_PRO_VERSION" ]; then
     echo "Starting PRO services......"
@@ -47,5 +50,10 @@ cd /code/seahub
 if [ "$MIGRATE_SEAHUB_DB" ]; then
     echo "Migrating seahub db..."
     /usr/local/bin/gosu user python manage.py migrate --noinput
-fi 
+fi
+
+cd ./frontend
+/usr/local/bin/gosu user npm install
+cd ..
+
 /usr/local/bin/gosu user python manage.py runserver 0.0.0.0:8000
